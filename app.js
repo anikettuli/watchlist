@@ -1084,15 +1084,32 @@ function hideModal(modal) {
 }
 
 function showLoading(show, total = 0) {
+  const overlay = elements.loadingOverlay;
+  if (!overlay) return;
+
   if (show) {
-    elements.loadingOverlay.classList.remove('opacity-0', 'invisible');
-    elements.loadingOverlay.classList.add('opacity-100', 'visible');
+    // Reset progress first
     elements.progressBar.style.width = '0%';
-    elements.progressText.textContent = `0 / ${total}`;
+    elements.progressText.textContent = `Processing 0 of ${total} items`;
     if (elements.progressPercent) elements.progressPercent.textContent = '0%';
+
+    // Show overlay
+    overlay.classList.remove('opacity-0', 'invisible');
+    overlay.classList.add('opacity-100');
+    overlay.style.visibility = 'visible';
+    overlay.style.pointerEvents = 'auto';
   } else {
-    elements.loadingOverlay.classList.add('opacity-0', 'invisible');
-    elements.loadingOverlay.classList.remove('opacity-100', 'visible');
+    // Hide overlay
+    overlay.classList.remove('opacity-100');
+    overlay.classList.add('opacity-0', 'invisible');
+    overlay.style.visibility = 'hidden';
+    overlay.style.pointerEvents = 'none';
+
+    // Reset values after hiding
+    setTimeout(() => {
+      elements.progressBar.style.width = '0%';
+      if (elements.progressPercent) elements.progressPercent.textContent = '0%';
+    }, 300);
   }
 }
 
