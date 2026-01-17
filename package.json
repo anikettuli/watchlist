@@ -1,0 +1,8 @@
+{
+  "name": "watchlist",
+  "private": true,
+  "devDependencies": {
+    "tailwindcss": "next",
+    "@tailwindcss/cli": "next"
+  }
+}

@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WatchlistHub | Premium Movie Manager</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            primary: '#6366f1',
+            'primary-hover': '#4f46e5',
+            'bg-dark': '#09090b',
+            'card-dark': '#18181b',
+            'border-dark': '#27272a',
+          },
+          animation: {
+            'slide-up': 'slideUp 0.4s ease-out forwards',
+          },
+          keyframes: {
+            slideUp: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style type="text/tailwindcss">
+    @layer components {
+      .glass {
+        @apply bg-[#18181b]/70 backdrop-blur-xl border border-white/5;
+      }
+      
+      .glass-hover {
+        @apply transition-all duration-300 hover:bg-[#18181b]/90 hover:border-[#6366f1]/30 hover:shadow-2xl hover:shadow-[#6366f1]/10;
+      }
+
+      .btn-base {
+        @apply inline-flex items-center justify-center gap-2 px-5 h-11 rounded-xl font-semibold text-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+      }
+
+      .btn-primary {
+        @apply btn-base bg-primary text-white shadow-lg shadow-primary/25 hover:bg-primary-hover hover:shadow-primary/40;
+      }
+
+      .btn-secondary {
+        @apply btn-base bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 hover:border-white/20;
+      }
+
+      .btn-danger {
+        @apply btn-base bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/40;
+      }
+
+      .input-base {
+        @apply w-full bg-white/5 border border-white/10 rounded-xl px-4 h-11 text-sm text-white transition-all focus:outline-none focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10;
+      }
+
+      /* Modals */
+      .modal-overlay {
+        @apply fixed inset-0 z-50 bg-black/80 backdrop-blur-sm opacity-0 invisible transition-all duration-300;
+      }
+      .modal-overlay.active {
+        @apply opacity-100 visible;
+      }
+
+      .modal {
+        @apply transform scale-95 opacity-0 translate-y-4 transition-all duration-500;
+        transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .modal-overlay.active .modal {
+        @apply scale-100 opacity-100 translate-y-0;
+      }
+
+      /* Tabs */
+      .tab-content {
+        @apply hidden;
+      }
+      .tab-content.active {
+        @apply block animate-slide-up;
+      }
+
+      /* Toggle Group */
+      .toggle-group {
+        @apply flex p-1 bg-white/5 border border-white/10 rounded-xl w-fit;
+      }
+      .toggle-btn {
+        @apply px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white cursor-pointer;
+      }
+      .toggle-btn.active {
+        @apply bg-white/10 text-white shadow-sm;
+      }
+    }
+
+    @layer base {
+      body {
+        @apply bg-[#09090b] text-slate-300 font-sans selection:bg-[#6366f1]/30;
+        color-scheme: dark;
+      }
+      
+      /* Dark dropdown menus */
+      select, select option {
+        background-color: #18181b;
+        color: #e2e8f0;
+      }
+      
+      /* Scrollbar */
+      ::-webkit-scrollbar {
+        @apply w-1.5;
+      }
+      ::-webkit-scrollbar-track {
+        @apply bg-transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        @apply bg-white/10 rounded-full hover:bg-white/20;
+      }
+    }
+  </style>
+</head>
+
+<body class="min-h-screen">
+  <!-- Nav / Header -->
+  <header
+    class="sticky top-0 z-50 glass border-b border-white/5 px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+    <div class="flex items-center gap-4">
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/30 shrink-0">
+        <svg class="text-white shrink-0" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+          <path
+            d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold tracking-tight">Watchlist<span class="text-primary">Hub</span></h1>
+        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">IMDb & RT Ranked</p>
+      </div>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="hidden lg:flex items-center gap-8 px-8 border-x border-white/10">
+      <div class="flex flex-col items-center">
+        <span id="totalMovies" class="text-lg font-bold leading-tight">0</span>
+        <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Movies</span>
+      </div>
+      <div class="flex flex-col items-center">
+        <span id="totalShows" class="text-lg font-bold leading-tight">0</span>
+        <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">TV Shows</span>
+      </div>
+      <div class="flex flex-col items-center">
+        <span id="avgRating" class="text-lg font-bold leading-tight text-primary">-</span>
+        <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Avg Rank</span>
+      </div>
+      <div class="flex flex-col items-center">
+        <span id="totalGenres" class="text-lg font-bold leading-tight">0</span>
+        <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Genres</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-2 ml-auto">
+      <button id="importBtn" class="btn-secondary btn-base" title="Import Data">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+          <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+        </svg>
+      </button>
+      <button id="dedupeBtn" class="btn-secondary btn-base" title="Remove Duplicates">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+          <path
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+      </button>
+      <button id="clearAllBtn" class="btn-danger btn-base" title="Clear All Data">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+          <path d="M18.364 5.636l-12.728 12.728m0-12.728l12.728 12.728" />
+        </svg>
+      </button>
+      <button id="settingsBtn" class="btn-secondary btn-base" title="API Settings">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+          <path
+            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      </button>
+      <div class="w-px h-6 bg-white/10 mx-2"></div>
+      <button id="refreshRatingsBtn" class="btn-secondary btn-base" title="Refresh All Ratings">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+          <path
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </button>
+      <button id="fetchDataBtn" class="btn-primary btn-base px-6 shadow-indigo-500/20" disabled title="Fetch Ratings">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+          <path d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Fetch</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-[1920px] mx-auto p-6 flex flex-col lg:flex-row gap-8">
+    <!-- Filters Sidebar -->
+    <aside class="w-full lg:w-80 shrink-0 space-y-8">
+      <!-- Search -->
+      <div class="space-y-3">
+        <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Quick Find</label>
+        <div class="relative group">
+          <svg
+            class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-primary transition-colors"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" id="searchInput" placeholder="Search by title..." class="input-base w-full pl-11">
+        </div>
+      </div>
+
+      <!-- Filters Group -->
+      <div class="glass rounded-[2rem] p-6 space-y-8">
+        <!-- Type -->
+        <div class="space-y-3">
+          <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Format</label>
+          <div id="typeFilter" class="toggle-group">
+            <button class="toggle-btn active" data-value="all">All</button>
+            <button class="toggle-btn" data-value="movie">Movies</button>
+            <button class="toggle-btn" data-value="tv">TV</button>
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="space-y-3">
+          <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Status</label>
+          <div id="watchedFilter" class="toggle-group">
+            <button class="toggle-btn active" data-value="all">All</button>
+            <button class="toggle-btn" data-value="unwatched">To Watch</button>
+            <button class="toggle-btn" data-value="watched">Watched</button>
+          </div>
+        </div>
+
+        <!-- Sort -->
+        <div class="space-y-3">
+          <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Sort By</label>
+          <select id="sortSelect" class="input-base w-full appearance-none cursor-pointer">
+            <option value="rating-desc">Highest Ranked</option>
+            <option value="rating-asc">Lowest Ranked</option>
+            <option value="year-desc">Newest First</option>
+            <option value="year-asc">Oldest First</option>
+            <option value="title-asc">A to Z</option>
+            <option value="title-desc">Z to A</option>
+          </select>
+        </div>
+
+        <!-- Genre -->
+        <div class="space-y-3">
+          <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Category</label>
+          <select id="genreFilter" class="input-base w-full appearance-none">
+            <option value="">All Categories</option>
+          </select>
+        </div>
+
+        <!-- Language -->
+        <div class="space-y-3">
+          <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Original Language</label>
+          <select id="languageFilter" class="input-base w-full appearance-none">
+            <option value="">All Languages</option>
+          </select>
+        </div>
+
+        <!-- Rating Filter -->
+        <div class="space-y-4 pt-2">
+          <div class="flex justify-between items-center">
+            <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Min Rank</label>
+            <span id="ratingValue" class="text-primary font-black text-sm bg-primary/10 px-2 py-0.5 rounded-lg">0</span>
+          </div>
+          <input type="range" id="ratingFilter" min="0" max="10" step="0.1" value="0"
+            class="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary">
+        </div>
+
+        <button id="clearFilters"
+          class="text-[10px] font-black text-slate-500 hover:text-white uppercase tracking-[0.2em] w-full py-3 border border-white/5 rounded-xl hover:bg-white/5 transition-colors">
+          Reset All Filters
+        </button>
+      </div>
+
+      <button id="pickForMeBtn" class="btn-primary btn-base w-full py-7 group text-base">
+        <svg class="w-5 h-5 group-hover:rotate-12 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" />
+        </svg>
+        Pick My Next Watch
+      </button>
+    </aside>
+
+    <!-- Grid Content -->
+    <div class="flex-1 space-y-6">
+      <div class="flex justify-between items-center px-2">
+        <h2 id="resultsCount" class="text-xs font-bold text-slate-500 uppercase tracking-widest leading-none">Showing 0
+          titles</h2>
+      </div>
+
+      <div id="watchlistGrid"
+        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
+        <!-- Empty State -->
+        <div id="emptyState"
+          class="col-span-full py-32 flex flex-col items-center justify-center text-center space-y-8">
+          <div class="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center text-slate-700">
+            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke-width="1.5" />
+            </svg>
+          </div>
+          <div class="max-w-xs space-y-3">
+            <h3 class="text-2xl font-black tracking-tight">Your list is empty</h3>
+            <p class="text-slate-500 text-sm font-medium">Start by importing your Watchlist.json from Google Takeout or
+              adding manually.</p>
+          </div>
+          <button id="startImportBtn" class="btn-primary btn-base px-8 h-12">
+            Import Your List
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modals -->
+  <!-- API Key Modal -->
+  <div id="apiKeyModal" class="modal-overlay fixed inset-0 z-[100] flex items-center justify-center p-6">
+    <div class="modal w-full max-w-lg glass rounded-[2.5rem] overflow-hidden shadow-2xl">
+      <div class="p-10 space-y-8">
+        <div class="space-y-2 text-center">
+          <h3 class="text-3xl font-black tracking-tight">Connect APIs</h3>
+          <p class="text-slate-400 text-sm font-medium">To fetch rankings, posters, and details, you'll need free API
+            keys.</p>
+        </div>
+
+        <div class="space-y-6">
+          <div class="p-5 bg-white/3 border border-white/5 rounded-2xl space-y-4">
+            <div class="flex justify-between items-center">
+              <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">1. TMDB API Key</h4>
+              <a href="https://www.themoviedb.org/settings/api" target="_blank"
+                class="text-[10px] text-primary hover:underline font-black uppercase tracking-widest">Get Key</a>
+            </div>
+            <input type="password" id="apiKeyInput" placeholder="Paste TMDB key here..." class="input-base w-full">
+          </div>
+
+          <div class="p-5 bg-white/3 border border-white/5 rounded-2xl space-y-4">
+            <div class="flex justify-between items-center">
+              <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">2. OMDb API Key (Free)</h4>
+              <a href="http://www.omdbapi.com/apikey.aspx" target="_blank"
+                class="text-[10px] text-primary hover:underline font-black uppercase tracking-widest">Get Key</a>
+            </div>
+            <input type="password" id="omdbKeyInput" placeholder="Paste OMDb key here..." class="input-base w-full">
+          </div>
+        </div>
+
+        <div class="space-y-4 pt-4">
+          <button id="saveApiKey" class="btn-primary btn-base w-full h-14 text-base">Save & Connect</button>
+          <button
+            class="modal-close w-full py-2 text-slate-500 hover:text-white text-[10px] font-black uppercase tracking-[0.2em] transition-colors">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Modal -->
+  <div id="importModal" class="modal-overlay fixed inset-0 z-[100] flex items-center justify-center p-6">
+    <div class="modal w-full max-w-2xl glass rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+      <div class="p-8 border-b border-white/5 flex items-center justify-between bg-white/2">
+        <h3 class="text-xl font-black tracking-tight">Import Watchlist</h3>
+        <button class="modal-close p-2 hover:bg-white/5 rounded-xl transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M6 18L18 6M6 6l12 12" stroke-width="2.5" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="flex border-b border-white/5 bg-white/1">
+        <button
+          class="tab-btn active flex-1 py-5 border-b-2 border-primary text-[10px] font-black uppercase tracking-[0.2em] text-white"
+          data-tab="file">Upload File</button>
+        <button
+          class="tab-btn flex-1 py-5 border-b-2 border-transparent text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-white"
+          data-tab="manual">Manual Entry</button>
+        <button
+          class="tab-btn flex-1 py-5 border-b-2 border-transparent text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-white"
+          data-tab="json">Raw JSON</button>
+      </div>
+
+      <div class="modal-body p-10 overflow-y-auto custom-scrollbar">
+        <!-- File Tab -->
+        <div id="file-tab" class="tab-content active space-y-8">
+          <div id="fileUploadArea"
+            class="border-2 border-dashed border-white/10 rounded-[2.5rem] py-20 flex flex-col items-center justify-center space-y-5 hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer group">
+            <div
+              class="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <svg class="w-10 h-10 text-slate-500 group-hover:text-primary" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-width="2.5" />
+              </svg>
+            </div>
+            <div class="text-center">
+              <p class="font-black text-white">Drop Watchlist.json here</p>
+              <p class="text-slate-500 text-[10px] mt-1 font-black uppercase tracking-widest">or click to browse files
+              </p>
+            </div>
+            <input type="file" id="fileInput" class="hidden" accept=".json">
+          </div>
+          <div class="flex items-center gap-6">
+            <div class="h-px bg-white/5 flex-1"></div>
+            <span class="text-[10px] font-black text-slate-600 uppercase tracking-widest">or try a sample</span>
+            <div class="h-px bg-white/5 flex-1"></div>
+          </div>
+          <button id="loadSampleBtn" class="btn-secondary btn-base w-full h-12">Load Example Movie List</button>
+
+          <div id="importFileStatus" class="hidden text-center text-xs font-bold mt-4 p-3 rounded-xl"></div>
+        </div>
+
+        <!-- Manual Tab -->
+        <div id="manual-tab" class="tab-content space-y-6">
+          <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Paste movie titles (one per
+            line)</label>
+          <textarea id="manualInput" class="input-base w-full min-h-[350px] py-4 resize-none leading-relaxed"
+            placeholder="Inception&#10;The Dark Knight&#10;Pulp Fiction..."></textarea>
+          <button id="addManualBtn" class="btn-primary btn-base w-full h-14 text-base">Add to Watchlist</button>
+        </div>
+
+        <!-- JSON Tab -->
+        <div id="json-tab" class="tab-content space-y-6">
+          <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Raw JSON Array</label>
+          <textarea id="jsonInput"
+            class="input-base w-full min-h-[350px] py-4 resize-none font-mono text-xs leading-relaxed"
+            placeholder='[{"title":"Movie Name"}, ...]'></textarea>
+          <button id="parseJsonBtn" class="btn-primary btn-base w-full h-14 text-base">Parse & Import</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div id="detailModal" class="modal-overlay fixed inset-0 z-[100] flex items-center justify-center p-6">
+    <div
+      class="modal w-full max-w-5xl glass rounded-[3rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.6)] flex flex-col md:flex-row relative">
+      <button
+        class="modal-close absolute top-8 right-8 z-10 p-3 bg-black/60 backdrop-blur-xl rounded-full border border-white/10 hover:bg-black/80 transition-colors shadow-2xl">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M6 18L18 6M6 6l12 12" stroke-width="3" />
+        </svg>
+      </button>
+      <div id="detailContent" class="w-full flex flex-col md:flex-row">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Fix Match Modal -->
+  <div id="fixMatchModal" class="modal-overlay fixed inset-0 z-[110] flex items-center justify-center p-6">
+    <div class="modal w-full max-w-lg glass rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+      <div class="p-8 border-b border-white/5 flex items-center justify-between bg-white/2">
+        <h3 class="text-xl font-black tracking-tight">Fix Search Result</h3>
+        <button id="closeFixMatchModal" class="p-2 hover:bg-white/5 rounded-xl transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M6 18L18 6M6 6l12 12" stroke-width="2.5" />
+          </svg>
+        </button>
+      </div>
+      <div class="p-8 space-y-8 overflow-hidden flex flex-col">
+        <div class="flex gap-3">
+          <input type="text" id="fixSearchInput" class="input-base flex-1 focus:ring-0"
+            placeholder="Type correct title...">
+          <button id="fixSearchBtn" class="btn-primary btn-base px-6">Search</button>
+        </div>
+        <div id="fixResultsList" class="space-y-4 overflow-y-auto pr-2 custom-scrollbar flex-1">
+          <!-- Results -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay"
+    class="fixed inset-0 z-[150] bg-zinc-950/90 backdrop-blur-2xl flex flex-col items-center justify-center p-12 opacity-0 invisible transition-all duration-300">
+    <div class="w-full max-w-lg space-y-12 text-center">
+      <div class="relative w-40 h-40 mx-auto">
+        <svg class="w-full h-full text-primary" viewBox="0 0 100 100">
+          <circle class="opacity-10" cx="50" cy="50" r="45" stroke="currentColor" stroke-width="8" fill="none" />
+          <path class="opacity-100 animate-[spin_2s_linear_infinite]" d="M50 5 a45 45 0 0 1 45 45" stroke="currentColor"
+            stroke-width="8" stroke-linecap="round" fill="none" />
+        </svg>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <span id="progressPercent" class="text-3xl font-black tracking-tighter">0%</span>
+        </div>
+      </div>
+      <div class="space-y-4">
+        <h3 class="text-3xl font-black tracking-tight">Updating Your Collection</h3>
+        <p id="progressText" class="text-slate-500 font-black uppercase tracking-[0.3em] text-[10px]">Processing 0 of 0
+          items</p>
+      </div>
+      <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5 p-[1px]">
+        <div id="progressBar"
+          class="h-full bg-primary shadow-[0_0_30px_rgba(99,102,241,0.6)] transition-all duration-500 w-0 rounded-full">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Config is optional - if missing, users will be prompted for API keys -->
+  <script src="config.js" onerror="console.log('No config.js found - API keys can be entered via Settings')"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
