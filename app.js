@@ -35,12 +35,14 @@ const elements = {
   // Buttons
   importBtn: document.getElementById('importBtn'),
   fetchDataBtn: document.getElementById('fetchDataBtn'),
+  fetchDropdownBtn: document.getElementById('fetchDropdownBtn'),
+  fetchDropdownMenu: document.getElementById('fetchDropdownMenu'),
+  fetchAllBtn: document.getElementById('fetchAllBtn'),
   startImportBtn: document.getElementById('startImportBtn'),
   loadSampleBtn: document.getElementById('loadSampleBtn'),
   addManualBtn: document.getElementById('addManualBtn'),
   parseJsonBtn: document.getElementById('parseJsonBtn'),
   saveApiKeyBtn: document.getElementById('saveApiKey'),
-  refreshRatingsBtn: document.getElementById('refreshRatingsBtn'),
 
   // Modals
   importModal: document.getElementById('importModal'),
@@ -102,10 +104,9 @@ function init() {
     omdbInput.value = state.omdbKey;
   }
 
-  // Check for API key
+  // Check for API key and enable/disable fetch buttons
   if (state.apiKey) {
-    elements.fetchDataBtn.disabled = state.watchlist.length === 0;
-    if (elements.refreshRatingsBtn) elements.refreshRatingsBtn.disabled = state.watchlist.length === 0;
+    setFetchButtonsEnabled(state.watchlist.length > 0);
   } else {
     // No API keys found - show the modal to prompt user
     // Delay slightly to ensure page is loaded
@@ -113,6 +114,12 @@ function init() {
       showModal(elements.apiKeyModal);
     }, 500);
   }
+}
+
+// Helper to enable/disable both fetch buttons together
+function setFetchButtonsEnabled(enabled) {
+  elements.fetchDataBtn.disabled = !enabled;
+  if (elements.fetchDropdownBtn) elements.fetchDropdownBtn.disabled = !enabled;
 }
 
 
@@ -168,13 +175,33 @@ function setupEventListeners() {
   elements.addManualBtn.addEventListener('click', handleManualImport);
   elements.parseJsonBtn.addEventListener('click', handleJsonImport);
   elements.loadSampleBtn.addEventListener('click', loadSampleData);
+
+  // Split button: Primary fetch (missing only)
   elements.fetchDataBtn.addEventListener('click', () => fetchAllMetadata(false));
-  if (elements.refreshRatingsBtn) {
-    elements.refreshRatingsBtn.addEventListener('click', () => {
-      // Auto-confirmed refresh
-      fetchAllMetadata(true);
+
+  // Split button: Dropdown toggle
+  if (elements.fetchDropdownBtn && elements.fetchDropdownMenu) {
+    elements.fetchDropdownBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFetchDropdown();
+    });
+
+    // Fetch All from dropdown
+    if (elements.fetchAllBtn) {
+      elements.fetchAllBtn.addEventListener('click', () => {
+        hideFetchDropdown();
+        fetchAllMetadata(true);
+      });
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#fetchButtonGroup')) {
+        hideFetchDropdown();
+      }
     });
   }
+
   elements.saveApiKeyBtn.addEventListener('click', saveApiKey);
 
   // Dedupe Action
@@ -346,9 +373,8 @@ function importItems(newItems) {
   updateStats();
   renderGrid();
 
-  // Enable fetch button if we have raw items
-  elements.fetchDataBtn.disabled = false;
-  if (elements.refreshRatingsBtn) elements.refreshRatingsBtn.disabled = false;
+  // Enable fetch buttons if we have items
+  setFetchButtonsEnabled(true);
 
   // Success Feedback & Close
   showImportStatus(`Success! Added ${formattedItems.length} movies.`, false);
@@ -401,8 +427,7 @@ function clearAllData() {
   saveState();
   updateStats();
   renderGrid();
-  elements.fetchDataBtn.disabled = true;
-  if (elements.refreshRatingsBtn) elements.refreshRatingsBtn.disabled = true;
+  setFetchButtonsEnabled(false);
   console.log('All data cleared!');
 }
 
@@ -426,8 +451,7 @@ function saveApiKey() {
   if (tmdbKey || omdbKey) {
     hideModal(elements.apiKeyModal);
     if (state.watchlist.length > 0) {
-      elements.fetchDataBtn.disabled = false;
-      if (elements.refreshRatingsBtn) elements.refreshRatingsBtn.disabled = false;
+      setFetchButtonsEnabled(true);
     }
   }
 }
@@ -1081,6 +1105,26 @@ function showModal(modal) {
 
 function hideModal(modal) {
   modal.classList.remove('active');
+}
+
+function toggleFetchDropdown() {
+  const menu = elements.fetchDropdownMenu;
+  if (!menu) return;
+
+  const isVisible = !menu.classList.contains('invisible');
+  if (isVisible) {
+    hideFetchDropdown();
+  } else {
+    menu.classList.remove('opacity-0', 'invisible');
+    menu.classList.add('opacity-100');
+  }
+}
+
+function hideFetchDropdown() {
+  const menu = elements.fetchDropdownMenu;
+  if (!menu) return;
+  menu.classList.add('opacity-0', 'invisible');
+  menu.classList.remove('opacity-100');
 }
 
 function showLoading(show, total = 0) {

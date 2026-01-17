@@ -195,18 +195,43 @@
         </svg>
       </button>
       <div class="w-px h-6 bg-white/10 mx-2"></div>
-      <button id="refreshRatingsBtn" class="btn-secondary btn-base" title="Refresh All Ratings">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-          <path
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-      </button>
-      <button id="fetchDataBtn" class="btn-primary btn-base px-6 shadow-indigo-500/20" disabled title="Fetch Ratings">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-          <path d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span>Fetch</span>
-      </button>
+
+      <!-- Split Button: Fetch with Dropdown -->
+      <div class="relative" id="fetchButtonGroup">
+        <div class="flex">
+          <!-- Primary Button -->
+          <button id="fetchDataBtn"
+            class="btn-primary btn-base px-5 rounded-r-none border-r border-white/20 shadow-indigo-500/20" disabled
+            title="Fetch missing data & ratings">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>Fetch</span>
+          </button>
+          <!-- Dropdown Trigger -->
+          <button id="fetchDropdownBtn" class="btn-primary btn-base px-2 rounded-l-none shadow-indigo-500/20" disabled
+            title="More options">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+        <!-- Dropdown Menu -->
+        <div id="fetchDropdownMenu"
+          class="absolute right-0 top-full mt-2 w-48 glass rounded-xl border border-white/10 shadow-2xl opacity-0 invisible transition-all duration-200 z-50">
+          <div class="p-2">
+            <button id="fetchAllBtn"
+              class="w-full text-left px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white rounded-lg transition-colors flex items-center gap-3">
+              <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Refresh All
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </header>
 
