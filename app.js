@@ -162,6 +162,55 @@ function setupEventListeners() {
   initFilterHandlers();
   initActionHandlers();
   initKeyboardHandlers();
+  initMobileHandlers();
+}
+
+function initMobileHandlers() {
+  const sidebar = document.getElementById('sidebar');
+  const mobileFilterBtn = document.getElementById('mobileFilterBtn');
+  const closeSidebar = document.getElementById('closeSidebar');
+  const mobileActionsBtn = document.getElementById('mobileActionsBtn');
+  const mobileActionSheet = document.getElementById('mobileActionSheet');
+  const closeActionSheet = document.getElementById('closeActionSheet');
+  const mobilePickBtn = document.getElementById('mobilePickBtn');
+
+  const toggleSidebar = () => {
+    sidebar.classList.toggle('-translate-x-full');
+  };
+
+  const toggleActionSheet = () => {
+    mobileActionSheet.classList.toggle('active');
+    const sheet = mobileActionSheet.querySelector('.modal');
+    if (mobileActionSheet.classList.contains('active')) {
+      sheet.classList.remove('translate-y-full');
+    } else {
+      sheet.classList.add('translate-y-full');
+    }
+  };
+
+  if (mobileFilterBtn) mobileFilterBtn.addEventListener('click', toggleSidebar);
+  if (closeSidebar) closeSidebar.addEventListener('click', toggleSidebar);
+  if (mobileActionsBtn) mobileActionsBtn.addEventListener('click', toggleActionSheet);
+  if (closeActionSheet) closeActionSheet.addEventListener('click', toggleActionSheet);
+  if (mobilePickBtn) mobilePickBtn.addEventListener('click', pickRandomMovie);
+
+  // Link mobile action sheet buttons to original handlers
+  document.getElementById('importBtnMobile')?.addEventListener('click', () => {
+    toggleActionSheet();
+    showModal(elements.importModal);
+  });
+  document.getElementById('dedupeBtnMobile')?.addEventListener('click', () => {
+    toggleActionSheet();
+    removeDuplicates();
+  });
+  document.getElementById('settingsBtnMobile')?.addEventListener('click', () => {
+    toggleActionSheet();
+    showModal(elements.apiKeyModal);
+  });
+  document.getElementById('clearAllBtnMobile')?.addEventListener('click', () => {
+    toggleActionSheet();
+    clearAllData();
+  });
 }
 
 function initKeyboardHandlers() {

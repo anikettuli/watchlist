@@ -52,40 +52,50 @@
 
     <!-- Actions -->
     <div class="flex items-center gap-2 ml-auto" role="toolbar" aria-label="Action buttons">
-      <button id="importBtn" class="btn-secondary btn-base" title="Import Data" aria-label="Import data">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
-          <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-        </svg>
-      </button>
-      <button id="dedupeBtn" class="btn-secondary btn-base" title="Remove Duplicates" aria-label="Remove duplicate items">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
-          <path
-            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-      </button>
-      <button id="clearAllBtn" class="btn-danger btn-base" title="Clear All Data" aria-label="Clear all data">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
-          <path d="M18.364 5.636l-12.728 12.728m0-12.728l12.728 12.728" />
-        </svg>
-      </button>
-        <button id="settingsBtn" class="btn-secondary btn-base" title="API Settings" aria-label="API settings">
-         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-           <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-           <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-         </svg>
+      <div class="hidden sm:flex items-center gap-2">
+        <button id="importBtn" class="btn-secondary btn-base" title="Import Data" aria-label="Import data">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
+            <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
         </button>
-      <div class="w-px h-6 bg-white/10 mx-2"></div>
+        <button id="dedupeBtn" class="btn-secondary btn-base" title="Remove Duplicates" aria-label="Remove duplicate items">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
+            <path
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </button>
+        <button id="clearAllBtn" class="btn-danger btn-base" title="Clear All Data" aria-label="Clear all data">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
+            <path d="M18.364 5.636l-12.728 12.728m0-12.728l12.728 12.728" />
+          </svg>
+        </button>
+          <button id="settingsBtn" class="btn-secondary btn-base" title="API Settings" aria-label="API settings">
+           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+             <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+             <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+           </svg>
+          </button>
+      </div>
+
+      <!-- Mobile Action Menu Toggle -->
+      <button id="mobileActionsBtn" class="sm:hidden btn-secondary btn-base" aria-label="Actions menu">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+          <path d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+        </svg>
+      </button>
+
+      <div class="w-px h-6 bg-white/10 mx-1 sm:mx-2"></div>
 
       <!-- Fetch Button Group -->
       <div class="relative dropdown-group" id="fetchGroup">
         <div class="flex">
           <button id="fetchMissingBtn"
-            class="btn-primary btn-base px-5 rounded-r-none border-r border-white/20 shadow-indigo-500/20" disabled
+            class="btn-primary btn-base px-3 sm:px-5 rounded-r-none border-r border-white/20 shadow-indigo-500/20" disabled
             title="Fetch only missing data">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
               <path d="M12 4v16m8-8H4" />
             </svg>
-            <span>Fetch Missing</span>
+            <span class="hidden sm:inline">Fetch Missing</span>
           </button>
           <button id="fetchDropdownBtn" class="btn-primary btn-base px-2 rounded-l-none" disabled>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
@@ -111,13 +121,13 @@
       <!-- Refresh Button Group -->
       <div class="relative dropdown-group" id="refreshGroup">
         <div class="flex">
-          <button id="refreshMissingBtn" class="btn-secondary btn-base px-5 rounded-r-none border-r border-white/10"
+          <button id="refreshMissingBtn" class="btn-secondary btn-base px-3 sm:px-5 rounded-r-none border-r border-white/10"
             disabled title="Refresh ratings for missing items">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
               <path
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            <span>Refresh Missing</span>
+            <span class="hidden sm:inline">Refresh Missing</span>
           </button>
           <button id="refreshDropdownBtn" class="btn-secondary btn-base px-2 rounded-l-none" disabled>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
@@ -142,9 +152,18 @@
     </div>
   </header>
 
-  <main class="max-w-[1920px] mx-auto p-6 flex flex-col lg:flex-row gap-8">
+  <main class="max-w-[1920px] mx-auto p-4 sm:p-6 flex flex-col lg:flex-row gap-8">
     <!-- Filters Sidebar -->
-    <aside class="w-full lg:w-80 shrink-0 space-y-8">
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-[60] w-80 glass border-r border-white/10 p-6 flex flex-col space-y-8 lg:static lg:w-80 lg:bg-transparent lg:border-none lg:p-0 lg:z-auto transition-transform duration-300 -translate-x-full lg:translate-x-0 overflow-y-auto custom-scrollbar">
+      <div class="flex items-center justify-between lg:hidden mb-4">
+        <h3 class="text-xl font-black tracking-tight">Filters</h3>
+        <button id="closeSidebar" class="p-2 hover:bg-white/5 rounded-xl transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M6 18L18 6M6 6l12 12" stroke-width="2.5" />
+          </svg>
+        </button>
+      </div>
+
       <!-- Search -->
       <div class="space-y-3">
         <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Quick Find</label>
@@ -235,6 +254,20 @@
 
     <!-- Grid Content -->
     <div class="flex-1 space-y-6">
+      <div class="lg:hidden flex items-center gap-3 mb-2">
+        <button id="mobileFilterBtn" class="flex-1 btn-secondary btn-base gap-3">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M3 4.5h18M6.75 9h10.5M10.5 13.5h3" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Filter & Sort
+        </button>
+        <button id="mobilePickBtn" class="btn-primary btn-base px-4">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" />
+          </svg>
+        </button>
+      </div>
+
       <div class="flex justify-between items-center px-2">
         <h2 id="resultsCount" class="text-xs font-bold text-slate-500 uppercase tracking-widest leading-none">Showing 0
           titles</h2>
@@ -448,6 +481,48 @@
   </div>
 
   <!-- Config is optional - if missing, users will be prompted for API keys -->
+  <!-- Mobile Action Sheet -->
+  <div id="mobileActionSheet" class="modal-overlay fixed inset-0 z-[120] flex items-end justify-center">
+    <div class="modal w-full glass rounded-t-[2.5rem] p-8 space-y-6 transform translate-y-full transition-transform duration-300">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-xl font-black tracking-tight">Actions</h3>
+        <button id="closeActionSheet" class="p-2 hover:bg-white/5 rounded-xl transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M6 18L18 6M6 6l12 12" stroke-width="2.5" />
+          </svg>
+        </button>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <button id="importBtnMobile" class="btn-secondary btn-base h-16 flex-col gap-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+            <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          <span class="text-[10px] font-black uppercase tracking-widest">Import</span>
+        </button>
+        <button id="dedupeBtnMobile" class="btn-secondary btn-base h-16 flex-col gap-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+            <path
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          <span class="text-[10px] font-black uppercase tracking-widest">Dedupe</span>
+        </button>
+        <button id="settingsBtnMobile" class="btn-secondary btn-base h-16 flex-col gap-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+             <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+             <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span class="text-[10px] font-black uppercase tracking-widest">Settings</span>
+        </button>
+        <button id="clearAllBtnMobile" class="btn-danger btn-base h-16 flex-col gap-1 text-red-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+            <path d="M18.364 5.636l-12.728 12.728m0-12.728l12.728 12.728" />
+          </svg>
+          <span class="text-[10px] font-black uppercase tracking-widest">Clear All</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script src="config.js" onerror="console.log('No config.js found - API keys can be entered via Settings')"></script>
   <script src="app.js"></script>
 </body>
