@@ -133,7 +133,15 @@ function updateFetchButtonsState() {
 
 
 function setupEventListeners() {
-  // Modal Toggles
+  initModalHandlers();
+  initDropdownHandlers();
+  initFetchHandlers();
+  initImportHandlers();
+  initFilterHandlers();
+  initActionHandlers();
+}
+
+function initModalHandlers() {
   elements.importBtn.addEventListener('click', () => showModal(elements.importModal));
   elements.startImportBtn.addEventListener('click', () => showModal(elements.importModal));
 
@@ -146,17 +154,21 @@ function setupEventListeners() {
       hideModal(e.target.closest('.modal-overlay'));
     });
   });
+}
 
-  // Dropdown Management
+function initDropdownHandlers() {
   const toggleDropdown = (menu) => {
     const isVisible = !menu.classList.contains('invisible');
-    // Close all first
-    elements.fetchMenu.classList.add('opacity-0', 'invisible', 'translate-y-2');
-    elements.refreshMenu.classList.add('opacity-0', 'invisible', 'translate-y-2');
+    closeAllDropdowns();
 
     if (!isVisible) {
       menu.classList.remove('opacity-0', 'invisible', 'translate-y-2');
     }
+  };
+
+  const closeAllDropdowns = () => {
+    elements.fetchMenu.classList.add('opacity-0', 'invisible', 'translate-y-2');
+    elements.refreshMenu.classList.add('opacity-0', 'invisible', 'translate-y-2');
   };
 
   elements.fetchDropdownBtn.addEventListener('click', (e) => {
@@ -169,20 +181,18 @@ function setupEventListeners() {
     toggleDropdown(elements.refreshMenu);
   });
 
-  document.addEventListener('click', () => {
-    elements.fetchMenu.classList.add('opacity-0', 'invisible', 'translate-y-2');
-    elements.refreshMenu.classList.add('opacity-0', 'invisible', 'translate-y-2');
-  });
+  document.addEventListener('click', closeAllDropdowns);
+}
 
-  // Fetch Actions
+function initFetchHandlers() {
   elements.fetchMissingBtn.addEventListener('click', () => fetchAllMetadata('missing-metadata'));
   elements.fetchAllBtn.addEventListener('click', () => fetchAllMetadata('all-metadata'));
 
-  // Refresh Actions
   elements.refreshMissingBtn.addEventListener('click', () => fetchAllMetadata('missing-ratings'));
   elements.refreshAllBtn.addEventListener('click', () => fetchAllMetadata('all-ratings'));
+}
 
-  // Import Tabs & Actions
+function initImportHandlers() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -203,11 +213,9 @@ function setupEventListeners() {
   elements.parseJsonBtn.addEventListener('click', handleJsonImport);
   elements.loadSampleBtn.addEventListener('click', loadSampleData);
   elements.saveApiKeyBtn.addEventListener('click', saveApiKey);
+}
 
-  document.getElementById('dedupeBtn').addEventListener('click', removeDuplicates);
-  document.getElementById('clearAllBtn').addEventListener('click', clearAllData);
-
-  // Filters
+function initFilterHandlers() {
   elements.searchInput.addEventListener('input', (e) => updateFilter('search', e.target.value));
 
   elements.typeFilterBtns.forEach(btn => {
@@ -218,7 +226,6 @@ function setupEventListeners() {
     });
   });
 
-  // Watched Filter
   const watchedFilterBtns = document.querySelectorAll('#watchedFilter .toggle-btn');
   watchedFilterBtns.forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -244,8 +251,11 @@ function setupEventListeners() {
   });
 
   elements.clearFiltersBtn.addEventListener('click', clearFilters);
+}
 
-  // Pick For Me
+function initActionHandlers() {
+  document.getElementById('dedupeBtn').addEventListener('click', removeDuplicates);
+  document.getElementById('clearAllBtn').addEventListener('click', clearAllData);
   document.getElementById('pickForMeBtn').addEventListener('click', pickRandomMovie);
 }
 
@@ -370,8 +380,8 @@ function importItems(newItems) {
   updateStats();
   renderGrid();
 
-  // Enable fetch buttons if we have items
-  setFetchButtonsEnabled(true);
+    // Enable fetch buttons if we have items
+    updateFetchButtonsState();
 
   // Success Feedback & Close
   showImportStatus(`Success! Added ${formattedItems.length} movies.`, false);
@@ -382,7 +392,7 @@ function importItems(newItems) {
 
     // Auto-fetch if key exists
     if (state.apiKey) {
-      fetchAllMetadata();
+      fetchAllMetadata('missing-metadata');
     }
   }, 1500);
 }
@@ -421,12 +431,12 @@ function removeDuplicates() {
 function clearAllData() {
   // Silent clear (no confirm)
   state.watchlist = [];
-  saveState();
-  updateStats();
-  renderGrid();
-  setFetchButtonsEnabled(false);
-  console.log('All data cleared!');
-}
+    saveState();
+    updateStats();
+    renderGrid();
+    updateFetchButtonsState();
+    console.log('All data cleared!');
+  }
 
 // --- API Integration ---
 
@@ -445,15 +455,15 @@ function saveApiKey() {
     localStorage.setItem('omdb_api_key', omdbKey);
   }
 
-  if (tmdbKey || omdbKey) {
-    hideModal(elements.apiKeyModal);
-    if (state.watchlist.length > 0) {
-      setFetchButtonsEnabled(true);
+    if (tmdbKey || omdbKey) {
+      hideModal(elements.apiKeyModal);
+      if (state.watchlist.length > 0) {
+        updateFetchButtonsState();
+      }
     }
-  }
 }
 
-async function fetchAllMetadata(forceAll = false) {
+async function fetchAllMetadata(mode = 'missing-metadata') {
   if (!state.apiKey) {
     showModal(elements.apiKeyModal);
     return;
@@ -493,6 +503,9 @@ async function fetchAllMetadata(forceAll = false) {
   }
 
   showLoading(true, itemsToFetch.length);
+
+  let completed = 0;
+  let errors = [];
 
   for (let i = 0; i < itemsToFetch.length; i++) {
     const item = itemsToFetch[i];
@@ -1159,19 +1172,25 @@ function showLoading(show, total = 0) {
     if (elements.progressPercent) elements.progressPercent.textContent = '0%';
 
     // Show overlay
-    overlay.classList.remove('opacity-0', 'invisible');
-    overlay.classList.add('opacity-100');
+    overlay.classList.remove('invisible');
     overlay.style.visibility = 'visible';
     overlay.style.pointerEvents = 'auto';
-  } else {
-    // Hide overlay
-    overlay.classList.remove('opacity-100');
-    overlay.classList.add('opacity-0', 'invisible');
-    overlay.style.visibility = 'hidden';
-    overlay.style.pointerEvents = 'none';
 
-    // Reset values after hiding
+    // Add visible state after visibility is set
+    requestAnimationFrame(() => {
+      overlay.classList.remove('opacity-0');
+      overlay.classList.add('opacity-100');
+    });
+  } else {
+    // Hide overlay with transition
+    overlay.classList.remove('opacity-100');
+    overlay.classList.add('opacity-0');
+
+    // Hide visibility after transition
     setTimeout(() => {
+      overlay.classList.add('invisible');
+      overlay.style.visibility = 'hidden';
+      overlay.style.pointerEvents = 'none';
       elements.progressBar.style.width = '0%';
       if (elements.progressPercent) elements.progressPercent.textContent = '0%';
     }, 300);
@@ -1182,7 +1201,25 @@ function updateProgress(current, total) {
   const pct = Math.round((current / total) * 100);
   elements.progressBar.style.width = `${pct}%`;
   elements.progressText.textContent = `Processing ${current} of ${total} items`;
-  if (elements.progressPercent) elements.progressPercent.textContent = `${pct}%`;
+  if (elements.progressPercent) {
+    // Animate number for smoother effect
+    const currentText = parseInt(elements.progressPercent.textContent) || 0;
+    animateValue(elements.progressPercent, currentText, pct, 200);
+  }
+}
+
+function animateValue(element, start, end, duration) {
+  const startTime = performance.now();
+  const update = (currentTime) => {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const value = Math.round(start + (end - start) * progress);
+    element.textContent = `${value}%`;
+    if (progress < 1) {
+      requestAnimationFrame(update);
+    }
+  };
+  requestAnimationFrame(update);
 }
 
 function saveState() {

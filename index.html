@@ -6,129 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WatchlistHub | Premium Movie Manager</title>
 
-  <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
     rel="stylesheet">
 
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Outfit', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-          },
-          colors: {
-            primary: '#6366f1',
-            'primary-hover': '#4f46e5',
-            'bg-dark': '#09090b',
-            'card-dark': '#18181b',
-            'border-dark': '#27272a',
-          },
-          animation: {
-            'slide-up': 'slideUp 0.4s ease-out forwards',
-          },
-          keyframes: {
-            slideUp: {
-              '0%': { opacity: '0', transform: 'translateY(10px)' },
-              '100%': { opacity: '1', transform: 'translateY(0)' },
-            }
-          }
-        }
-      }
-    }
-  </script>
-
-  <style type="text/tailwindcss">
-    @layer components {
-      .glass {
-        @apply bg-[#18181b]/70 backdrop-blur-xl border border-white/5;
-      }
-      
-      .glass-hover {
-        @apply transition-all duration-300 hover:bg-[#18181b]/90 hover:border-[#6366f1]/30 hover:shadow-2xl hover:shadow-[#6366f1]/10;
-      }
-
-      .btn-base {
-        @apply inline-flex items-center justify-center gap-2 px-5 h-11 rounded-xl font-semibold text-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
-      }
-
-      .btn-primary {
-        @apply btn-base bg-primary text-white shadow-lg shadow-primary/25 hover:bg-primary-hover hover:shadow-primary/40;
-      }
-
-      .btn-secondary {
-        @apply btn-base bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 hover:border-white/20;
-      }
-
-      .btn-danger {
-        @apply btn-base bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/40;
-      }
-
-      .input-base {
-        @apply w-full bg-white/5 border border-white/10 rounded-xl px-4 h-11 text-sm text-white transition-all focus:outline-none focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10;
-      }
-
-      /* Modals */
-      .modal-overlay {
-        @apply fixed inset-0 z-50 bg-black/80 backdrop-blur-sm opacity-0 invisible transition-all duration-300;
-      }
-      .modal-overlay.active {
-        @apply opacity-100 visible;
-      }
-
-      .modal {
-        @apply transform scale-95 opacity-0 translate-y-4 transition-all duration-500;
-        transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-      }
-      .modal-overlay.active .modal {
-        @apply scale-100 opacity-100 translate-y-0;
-      }
-
-      /* Tabs */
-      .tab-content {
-        @apply hidden;
-      }
-      .tab-content.active {
-        @apply block animate-slide-up;
-      }
-
-      /* Toggle Group */
-      .toggle-group {
-        @apply flex p-1 bg-white/5 border border-white/10 rounded-xl w-fit;
-      }
-      .toggle-btn {
-        @apply px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white cursor-pointer;
-      }
-      .toggle-btn.active {
-        @apply bg-white/10 text-white shadow-sm;
-      }
-    }
-
-    @layer base {
-      body {
-        @apply bg-[#09090b] text-slate-300 font-sans selection:bg-[#6366f1]/30;
-        color-scheme: dark;
-      }
-      
-      /* Dark dropdown menus */
-      select, select option {
-        background-color: #18181b;
-        color: #e2e8f0;
-      }
-      
-      /* Scrollbar */
-      ::-webkit-scrollbar {
-        @apply w-1.5;
-      }
-      ::-webkit-scrollbar-track {
-        @apply bg-transparent;
-      }
-      ::-webkit-scrollbar-thumb {
-        @apply bg-white/10 rounded-full hover:bg-white/20;
-      }
-    }
-  </style>
+  <link href="./dist/output.css" rel="stylesheet">
 </head>
 
 <body class="min-h-screen">
@@ -539,27 +420,30 @@
 
   <!-- Loading Overlay -->
   <div id="loadingOverlay"
-    class="fixed inset-0 z-[150] bg-zinc-950/90 backdrop-blur-2xl flex flex-col items-center justify-center p-12 opacity-0 invisible transition-all duration-300"
+    class="fixed inset-0 z-[150] bg-zinc-950/90 backdrop-blur-2xl flex flex-col items-center justify-center p-12 opacity-0 invisible transition-opacity duration-300"
     style="visibility: hidden; pointer-events: none;">
     <div class="w-full max-w-lg space-y-12 text-center">
-      <div class="relative w-40 h-40 mx-auto">
-        <svg class="w-full h-full text-primary" viewBox="0 0 100 100">
-          <circle class="opacity-10" cx="50" cy="50" r="45" stroke="currentColor" stroke-width="8" fill="none" />
-          <path class="opacity-100 animate-[spin_2s_linear_infinite]" d="M50 5 a45 45 0 0 1 45 45" stroke="currentColor"
-            stroke-width="8" stroke-linecap="round" fill="none" />
+      <div class="relative w-40 h-40 mx-auto flex items-center justify-center">
+        <svg class="w-full h-full" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(99, 102, 241, 0.1)" stroke-width="7" />
+          <circle id="spinnerCircle" cx="50" cy="50" r="42" fill="none" stroke="#6366f1" stroke-width="7"
+            stroke-linecap="round"
+            stroke-dasharray="264 264"
+            stroke-dashoffset="198"
+            class="spinner" />
         </svg>
         <div class="absolute inset-0 flex items-center justify-center">
           <span id="progressPercent" class="text-3xl font-black tracking-tighter">0%</span>
         </div>
       </div>
-      <div class="space-y-4">
+      <div class="space-y-4 animate-[fade-in_0.3s_ease-out_0.1s_both]">
         <h3 class="text-3xl font-black tracking-tight">Updating Your Collection</h3>
-        <p id="progressText" class="text-slate-500 font-black uppercase tracking-[0.3em] text-[10px]">Processing 0 of 0
+        <p id="progressText" class="text-slate-500 font-black uppercase tracking-[0.3em] text-[10px] leading-tight">Processing 0 of 0
           items</p>
       </div>
-      <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5 p-[1px]">
+      <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5 p-[1px] relative">
         <div id="progressBar"
-          class="h-full bg-primary shadow-[0_0_30px_rgba(99,102,241,0.6)] transition-all duration-500 w-0 rounded-full">
+          class="h-full bg-primary shadow-[0_0_30px_rgba(99,102,241,0.6)] transition-all duration-300 w-0 rounded-full">
         </div>
       </div>
     </div>

@@ -1,8 +1,12 @@
 {
   "name": "watchlist",
   "private": true,
+  "scripts": {
+    "build": "npx @tailwindcss/cli -i ./src/input.css -o ./dist/output.css",
+    "dev": "npx @tailwindcss/cli -i ./src/input.css -o ./dist/output.css --watch"
+  },
   "devDependencies": {
-    "tailwindcss": "next",
-    "@tailwindcss/cli": "next"
+    "@tailwindcss/cli": "^4.1.18",
+    "tailwindcss": "^4.1.18"
   }
 }
