@@ -51,30 +51,29 @@
     </div>
 
     <!-- Actions -->
-    <div class="flex items-center gap-2 ml-auto">
-      <button id="importBtn" class="btn-secondary btn-base" title="Import Data">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+    <div class="flex items-center gap-2 ml-auto" role="toolbar" aria-label="Action buttons">
+      <button id="importBtn" class="btn-secondary btn-base" title="Import Data" aria-label="Import data">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
           <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
         </svg>
       </button>
-      <button id="dedupeBtn" class="btn-secondary btn-base" title="Remove Duplicates">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+      <button id="dedupeBtn" class="btn-secondary btn-base" title="Remove Duplicates" aria-label="Remove duplicate items">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
           <path
             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
         </svg>
       </button>
-      <button id="clearAllBtn" class="btn-danger btn-base" title="Clear All Data">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+      <button id="clearAllBtn" class="btn-danger btn-base" title="Clear All Data" aria-label="Clear all data">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
           <path d="M18.364 5.636l-12.728 12.728m0-12.728l12.728 12.728" />
         </svg>
       </button>
-      <button id="settingsBtn" class="btn-secondary btn-base" title="API Settings">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-          <path
-            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      </button>
+        <button id="settingsBtn" class="btn-secondary btn-base" title="API Settings" aria-label="API settings">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+           <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+           <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+         </svg>
+        </button>
       <div class="w-px h-6 bg-white/10 mx-2"></div>
 
       <!-- Fetch Button Group -->
@@ -420,10 +419,9 @@
 
   <!-- Loading Overlay -->
   <div id="loadingOverlay"
-    class="fixed inset-0 z-[150] bg-zinc-950/90 backdrop-blur-2xl flex flex-col items-center justify-center p-12 opacity-0 invisible transition-opacity duration-300"
-    style="visibility: hidden; pointer-events: none;">
+    class="loading-overlay">
     <div class="w-full max-w-lg space-y-12 text-center">
-      <div class="relative w-40 h-40 mx-auto flex items-center justify-center">
+      <div class="spinner-container">
         <svg class="w-full h-full" viewBox="0 0 100 100">
           <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(99, 102, 241, 0.1)" stroke-width="7" />
           <circle id="spinnerCircle" cx="50" cy="50" r="42" fill="none" stroke="#6366f1" stroke-width="7"

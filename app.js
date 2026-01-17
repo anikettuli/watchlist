@@ -12,11 +12,29 @@ const TMDB_SEARCH_URL = 'https://api.themoviedb.org/3/search/multi';
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 const OMDB_API_URL = 'https://www.omdbapi.com/';
 
+// Simple LRU Cache for TMDB search results (max 50 entries)
+const searchCache = new Map();
+const MAX_CACHE_SIZE = 50;
+
+function getCachedSearch(query) {
+  return searchCache.get(query.toLowerCase());
+}
+
+function setCachedSearch(query, data) {
+  const key = query.toLowerCase();
+  if (searchCache.size >= MAX_CACHE_SIZE) {
+    const firstKey = searchCache.keys().next().value;
+    searchCache.delete(firstKey);
+  }
+  searchCache.set(key, data);
+  return data;
+}
+
 // State Management
 const state = {
-  apiKey: localStorage.getItem('tmdb_api_key') || '',
-  omdbKey: localStorage.getItem('omdb_api_key') || '',
-  watchlist: JSON.parse(localStorage.getItem('watchlist_data') || '[]'),
+  apiKey: '',
+  omdbKey: '',
+  watchlist: [],
   filters: {
     search: '',
     type: 'all',
@@ -63,6 +81,7 @@ const elements = {
   manualInput: document.getElementById('manualInput'),
   jsonInput: document.getElementById('jsonInput'),
   apiKeyInput: document.getElementById('apiKeyInput'),
+  omdbKeyInput: document.getElementById('omdbKeyInput'),
 
   // Filters
   searchInput: document.getElementById('searchInput'),
@@ -93,18 +112,21 @@ const elements = {
 
 // --- Initialization ---
 
-function init() {
+function loadState() {
+  state.watchlist = JSON.parse(localStorage.getItem('watchlist_data') || '[]');
   state.apiKey = localStorage.getItem('tmdb_api_key') || '';
   state.omdbKey = localStorage.getItem('omdb_api_key') || '';
+}
 
+function init() {
+  loadState();
   setupEventListeners();
   updateStats();
   renderGrid();
 
   // Pre-fill keys
   if (state.apiKey && elements.apiKeyInput) elements.apiKeyInput.value = state.apiKey;
-  const omdbInput = document.getElementById('omdbKeyInput');
-  if (state.omdbKey && omdbInput) omdbInput.value = state.omdbKey;
+  if (state.omdbKey && elements.omdbKeyInput) elements.omdbKeyInput.value = state.omdbKey;
 
   // Initial button state
   updateFetchButtonsState();
@@ -139,6 +161,18 @@ function setupEventListeners() {
   initImportHandlers();
   initFilterHandlers();
   initActionHandlers();
+  initKeyboardHandlers();
+}
+
+function initKeyboardHandlers() {
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const activeModal = document.querySelector('.modal-overlay.active');
+      if (activeModal) {
+        hideModal(activeModal);
+      }
+    }
+  });
 }
 
 function initModalHandlers() {
@@ -215,8 +249,15 @@ function initImportHandlers() {
   elements.saveApiKeyBtn.addEventListener('click', saveApiKey);
 }
 
+let searchDebounceTimer = null;
+
 function initFilterHandlers() {
-  elements.searchInput.addEventListener('input', (e) => updateFilter('search', e.target.value));
+  elements.searchInput.addEventListener('input', (e) => {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      updateFilter('search', e.target.value);
+    }, 300);
+  });
 
   elements.typeFilterBtns.forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -376,7 +417,7 @@ function importItems(newItems) {
   }));
 
   state.watchlist = [...state.watchlist, ...formattedItems];
-  saveState();
+  saveStateWithDebounce();
   updateStats();
   renderGrid();
 
@@ -506,49 +547,61 @@ async function fetchAllMetadata(mode = 'missing-metadata') {
 
   let completed = 0;
   let errors = [];
+  const BATCH_SIZE = 5;
+  const BATCH_DELAY = 500;
 
-  for (let i = 0; i < itemsToFetch.length; i++) {
-    const item = itemsToFetch[i];
-    updateProgress(i + 1, itemsToFetch.length);
+  // Process items in batches for parallel fetching
+  for (let i = 0; i < itemsToFetch.length; i += BATCH_SIZE) {
+    const batch = itemsToFetch.slice(i, i + BATCH_SIZE);
+    
+    // Process batch in parallel
+    await Promise.all(batch.map(async item => {
+      updateProgress(completed + 1, itemsToFetch.length);
+      
+      try {
+        // Step 1: Fetch from TMDB (for posters, genres, metadata)
+        const tmdbData = await searchTMDB(item.title);
 
-    try {
-      // Step 1: Fetch from TMDB (for posters, genres, metadata)
-      const tmdbData = await searchTMDB(item.title);
+        if (tmdbData) {
+          const extracted = extractTMDBFields(tmdbData);
 
-      if (tmdbData) {
-        const extracted = extractTMDBFields(tmdbData);
+          // Step 2: Fetch from OMDb (for IMDb and RT ratings)
+          const year = extracted.release_date ? extracted.release_date.substring(0, 4) : null;
+          const omdbData = await fetchOMDbRatings(extracted.title, year);
 
-        // Step 2: Fetch from OMDb (for IMDb and RT ratings)
-        const year = extracted.release_date ? extracted.release_date.substring(0, 4) : null;
-        const omdbData = await fetchOMDbRatings(extracted.title, year);
-
-        // Update the item in the original watchlist
-        const originalItemIndex = state.watchlist.findIndex(w => w.id === item.id);
-        if (originalItemIndex !== -1) {
-          state.watchlist[originalItemIndex] = {
-            ...state.watchlist[originalItemIndex],
-            ...extracted,
-            // Override with OMDb ratings if available
-            imdb_rating: omdbData?.imdb_rating || null,
-            imdb_id: omdbData?.imdb_id || null,
-            rt_rating: omdbData?.rt_rating || null,
-            details_fetched: true
-          };
+          // Update item in original watchlist
+          const originalItemIndex = state.watchlist.findIndex(w => w.id === item.id);
+          if (originalItemIndex !== -1) {
+            state.watchlist[originalItemIndex] = {
+              ...state.watchlist[originalItemIndex],
+              ...extracted,
+              // Override with OMDb ratings if available
+              imdb_rating: omdbData?.imdb_rating || null,
+              imdb_id: omdbData?.imdb_id || null,
+              rt_rating: omdbData?.rt_rating || null,
+              details_fetched: true
+            };
+          }
         }
+      } catch (err) {
+        console.error(`Failed to fetch ${item.title}`, err);
+        errors.push(item.title);
       }
-    } catch (err) {
-      console.error(`Failed to fetch ${item.title}`, err);
-      errors.push(item.title);
+      
+      completed++;
+      updateProgress(completed, itemsToFetch.length);
+    }));
+
+    // Save state after each batch
+    saveState();
+
+    // Delay between batches to respect rate limits
+    if (i + BATCH_SIZE < itemsToFetch.length) {
+      await new Promise(r => setTimeout(r, BATCH_DELAY));
     }
-
-    completed++;
-    updateProgress(completed, itemsToFetch.length);
-
-    // Slight delay to respect rate limits
-    await new Promise(r => setTimeout(r, 300));
   }
 
-  saveState();
+  saveStateWithDebounce();
   updateStats();
   renderGrid();
   showLoading(false);
@@ -559,15 +612,19 @@ async function fetchAllMetadata(mode = 'missing-metadata') {
 }
 
 async function searchTMDB(query) {
+  const cached = getCachedSearch(query);
+  if (cached) {
+    return cached;
+  }
+
   const url = `${TMDB_SEARCH_URL}?api_key=${state.apiKey}&query=${encodeURIComponent(query)}`;
   const res = await fetch(url);
   const data = await res.json();
 
   if (data.results && data.results.length > 0) {
-    // Prefer exact matches, otherwise first result
-    // Also prefer movies/tv over people
-    const filtered = data.results.filter(r => r.media_type === 'movie' || r.media_type === 'tv');
-    return filtered.length > 0 ? filtered[0] : data.results[0];
+    const result = data.results.filter(r => r.media_type === 'movie' || r.media_type === 'tv').length > 0 ? data.results.filter(r => r.media_type === 'movie' || r.media_type === 'tv')[0] : data.results[0];
+    setCachedSearch(query, result);
+    return result;
   }
   return null;
 }
@@ -773,29 +830,36 @@ function getValueForSort(item, sortType) {
   return 0;
 }
 
+function renderEmptyState(hasFilters) {
+  elements.watchlistGrid.innerHTML = '';
+  
+  if (state.watchlist.length === 0) {
+    elements.watchlistGrid.appendChild(elements.emptyState);
+    elements.emptyState.style.display = 'flex';
+  } else {
+    elements.emptyState.style.display = 'none';
+    elements.watchlistGrid.innerHTML = '<div class="empty-search">No matches found</div>';
+  }
+}
+
 function renderGrid() {
   const items = getFilteredAndSortedItems();
   elements.resultsCount.textContent = `Showing ${items.length} titles`;
 
   if (items.length === 0) {
-    elements.watchlistGrid.innerHTML = '';
-    if (state.watchlist.length === 0) {
-      elements.watchlistGrid.appendChild(elements.emptyState);
-      elements.emptyState.style.display = 'flex';
-    } else {
-      elements.emptyState.style.display = 'none';
-      elements.watchlistGrid.innerHTML = '<div class="empty-search">No matches found</div>';
-    }
+    renderEmptyState(state.filters.search || state.filters.genre || state.filters.language || state.filters.minRating > 0);
     return;
   }
 
   elements.emptyState.style.display = 'none';
   elements.watchlistGrid.innerHTML = '';
 
+  const fragment = document.createDocumentFragment();
   items.forEach(item => {
     const card = createCard(item);
-    elements.watchlistGrid.appendChild(card);
+    fragment.appendChild(card);
   });
+  elements.watchlistGrid.appendChild(fragment);
 }
 
 function pickRandomMovie() {
@@ -894,29 +958,20 @@ function createCard(item) {
 
 let currentItemToFix = null;
 
-function showDetails(item) {
-  currentItemToFix = item;
+// --- Detail Modal Helpers ---
+
+function renderDetailPoster(item) {
   const posterUrl = item.poster_path ? TMDB_IMAGE_BASE + item.poster_path : null;
-  const genres = item.genre_ids ? item.genre_ids.map(id => GENRE_MAP[id]).filter(Boolean) : [];
-  const score = getCompositeScore(item);
-
-  elements.detailContent.innerHTML = '';
-
-  // Left side: Poster
   const posterDiv = document.createElement('div');
   posterDiv.className = 'w-full md:w-2/5 aspect-[2/3] md:aspect-auto relative';
   posterDiv.innerHTML = posterUrl
     ? `<img src="${posterUrl}" alt="${item.title}" class="w-full h-full object-cover">`
     : `<div class="w-full h-full bg-slate-900 flex items-center justify-center text-slate-700">No Image</div>`;
+  return posterDiv;
+}
 
-  // Right side: Details
-  const infoDiv = document.createElement('div');
-  infoDiv.className = 'w-full md:w-3/5 p-8 md:p-12 space-y-8 max-h-[90vh] overflow-y-auto custom-scrollbar';
-
-  // Header: Title & Badges
-  const header = document.createElement('div');
-  header.className = 'space-y-4';
-
+function renderDetailTags(item) {
+  const score = getCompositeScore(item);
   const tagsRow = document.createElement('div');
   tagsRow.className = 'flex flex-wrap gap-2';
 
@@ -930,14 +985,22 @@ function showDetails(item) {
     tagsRow.innerHTML += `<div class="bg-primary text-white text-[10px] font-black px-2 py-1 rounded flex items-center gap-1 shadow-lg shadow-primary/40 uppercase tracking-tighter">Rank ${Number(score).toFixed(1)}</div>`;
   }
 
+  return tagsRow;
+}
+
+function renderDetailHeader(item, tagsRow) {
+  const header = document.createElement('div');
+  header.className = 'space-y-4';
   header.innerHTML = `
     <div class="flex items-start justify-between gap-4">
       <h2 class="text-3xl md:text-5xl font-black tracking-tight leading-none">${item.title}</h2>
     </div>
   `;
   header.appendChild(tagsRow);
+  return header;
+}
 
-  // Meta: Year, Length, Lang
+function renderDetailMeta(item) {
   const meta = document.createElement('div');
   meta.className = 'flex items-center gap-4 text-xs font-bold text-slate-500 uppercase tracking-widest';
   meta.innerHTML = `
@@ -947,16 +1010,21 @@ function showDetails(item) {
     <span class="w-1.5 h-1.5 bg-slate-800 rounded-full"></span>
     <span>${item.original_language ? item.original_language.toUpperCase() : '??'}</span>
   `;
+  return meta;
+}
 
-  // Description
+function renderDetailDescription(item) {
   const desc = document.createElement('div');
   desc.className = 'space-y-3';
   desc.innerHTML = `
     <h4 class="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">The Story</h4>
     <p class="text-slate-400 leading-relaxed text-sm md:text-base">${item.overview || 'Plot unknown.'}</p>
   `;
+  return desc;
+}
 
-  // Categories
+function renderDetailGenres(item) {
+  const genres = item.genre_ids ? item.genre_ids.map(id => GENRE_MAP[id]).filter(Boolean) : [];
   const genresRow = document.createElement('div');
   genresRow.className = 'space-y-3';
   genresRow.innerHTML = `
@@ -965,27 +1033,49 @@ function showDetails(item) {
       ${genres.map(g => `<span class="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs font-medium text-slate-300 transition-colors hover:border-primary/50 cursor-default">${g}</span>`).join('')}
     </div>
   `;
+  return genresRow;
+}
 
-  // Actions Footer
+function renderDetailActions(item) {
   const footer = document.createElement('div');
-  footer.className = 'pt-8 border-t border-white/5 flex flex-col md:flex-row gap-4';
+  footer.className = 'pt-8 border-t border-white/5 flex flex-col md:flex-row gap-4 items-stretch';
 
   const watchedBtn = document.createElement('button');
   watchedBtn.className = item.watched
-    ? 'flex-1 btn-base bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20'
-    : 'flex-1 btn-primary';
+    ? 'flex-1 btn-base bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 flex items-center justify-center gap-2 h-14'
+    : 'flex-1 btn-primary flex items-center justify-center gap-2 h-14';
   watchedBtn.innerHTML = item.watched
     ? `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg> Was Viewed`
     : `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Mark as Viewed`;
   watchedBtn.onclick = () => toggleWatched(item.id);
 
   const fixBtn = document.createElement('button');
-  fixBtn.className = 'btn-secondary px-6 shrink-0';
-  fixBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg> Fix`;
+  fixBtn.className = 'btn-secondary px-6 shrink-0 flex flex-col items-center justify-center gap-1 h-14';
+  fixBtn.innerHTML = `
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+    <span class="text-[10px] font-black uppercase tracking-widest">Fix</span>
+  `;
   fixBtn.onclick = () => openFixMatchModal();
 
   footer.appendChild(watchedBtn);
   footer.appendChild(fixBtn);
+  return footer;
+}
+
+function showDetails(item) {
+  currentItemToFix = item;
+  elements.detailContent.innerHTML = '';
+
+  const posterDiv = renderDetailPoster(item);
+  const infoDiv = document.createElement('div');
+  infoDiv.className = 'w-full md:w-3/5 p-8 md:p-12 space-y-8 max-h-[90vh] overflow-y-auto custom-scrollbar';
+
+  const tagsRow = renderDetailTags(item);
+  const header = renderDetailHeader(item, tagsRow);
+  const meta = renderDetailMeta(item);
+  const desc = renderDetailDescription(item);
+  const genresRow = renderDetailGenres(item);
+  const footer = renderDetailActions(item);
 
   infoDiv.appendChild(header);
   infoDiv.appendChild(meta);
@@ -1003,7 +1093,7 @@ function toggleWatched(itemId) {
   const idx = state.watchlist.findIndex(i => i.id === itemId);
   if (idx !== -1) {
     state.watchlist[idx].watched = !state.watchlist[idx].watched;
-    saveState();
+    saveStateWithDebounce();
     renderGrid();
     // Refresh detail view
     showDetails(state.watchlist[idx]);
@@ -1077,7 +1167,11 @@ async function performFixSearch(query) {
     });
 
   } catch (e) {
-    resultsDiv.innerHTML = '<div style="color:var(--danger)">Error searching. Check API Key.</div>';
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'fix-loading-spinner';
+    errorDiv.textContent = 'Error searching. Check API Key.';
+    resultsDiv.innerHTML = '';
+    resultsDiv.appendChild(errorDiv);
   }
 }
 
@@ -1095,7 +1189,7 @@ function applyFixMatch(newTmdbData) {
     };
 
     saveState();
-    updateStats(); // re-calc stats
+    updateStats();
     renderGrid();
 
     // Refresh detail view
@@ -1117,6 +1211,7 @@ function clearFilters() {
   state.filters = {
     search: '',
     type: 'all',
+    watched: 'all',
     genre: '',
     language: '',
     minRating: 0
@@ -1125,6 +1220,11 @@ function clearFilters() {
   elements.searchInput.value = '';
   elements.typeFilterBtns.forEach(b => b.classList.remove('active'));
   elements.typeFilterBtns[0].classList.add('active'); // set All active
+  
+  const watchedFilterBtns = document.querySelectorAll('#watchedFilter .toggle-btn');
+  watchedFilterBtns.forEach(b => b.classList.remove('active'));
+  watchedFilterBtns[0].classList.add('active'); // set All active
+  
   elements.genreFilter.value = '';
   elements.languageFilter.value = '';
   elements.ratingFilter.value = 0;
@@ -1139,26 +1239,6 @@ function showModal(modal) {
 
 function hideModal(modal) {
   modal.classList.remove('active');
-}
-
-function toggleFetchDropdown() {
-  const menu = elements.fetchDropdownMenu;
-  if (!menu) return;
-
-  const isVisible = !menu.classList.contains('invisible');
-  if (isVisible) {
-    hideFetchDropdown();
-  } else {
-    menu.classList.remove('opacity-0', 'invisible');
-    menu.classList.add('opacity-100');
-  }
-}
-
-function hideFetchDropdown() {
-  const menu = elements.fetchDropdownMenu;
-  if (!menu) return;
-  menu.classList.add('opacity-0', 'invisible');
-  menu.classList.remove('opacity-100');
 }
 
 function showLoading(show, total = 0) {
@@ -1224,6 +1304,15 @@ function animateValue(element, start, end, duration) {
 
 function saveState() {
   localStorage.setItem('watchlist_data', JSON.stringify(state.watchlist));
+}
+
+let saveStateTimer = null;
+function saveStateWithDebounce() {
+  clearTimeout(saveStateTimer);
+  saveStateTimer = setTimeout(() => {
+    saveState();
+    updateStats();
+  }, 300);
 }
 
 function showImportStatus(msg, isError) {
