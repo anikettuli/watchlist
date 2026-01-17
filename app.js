@@ -34,15 +34,22 @@ const state = {
 const elements = {
   // Buttons
   importBtn: document.getElementById('importBtn'),
-  fetchDataBtn: document.getElementById('fetchDataBtn'),
+  fetchMissingBtn: document.getElementById('fetchMissingBtn'),
   fetchDropdownBtn: document.getElementById('fetchDropdownBtn'),
-  fetchDropdownMenu: document.getElementById('fetchDropdownMenu'),
+  fetchMenu: document.getElementById('fetchMenu'),
   fetchAllBtn: document.getElementById('fetchAllBtn'),
+
+  refreshMissingBtn: document.getElementById('refreshMissingBtn'),
+  refreshDropdownBtn: document.getElementById('refreshDropdownBtn'),
+  refreshMenu: document.getElementById('refreshMenu'),
+  refreshAllBtn: document.getElementById('refreshAllBtn'),
+
   startImportBtn: document.getElementById('startImportBtn'),
   loadSampleBtn: document.getElementById('loadSampleBtn'),
   addManualBtn: document.getElementById('addManualBtn'),
   parseJsonBtn: document.getElementById('parseJsonBtn'),
   saveApiKeyBtn: document.getElementById('saveApiKey'),
+  settingsBtn: document.getElementById('settingsBtn'),
 
   // Modals
   importModal: document.getElementById('importModal'),
@@ -87,7 +94,6 @@ const elements = {
 // --- Initialization ---
 
 function init() {
-  // Refresh API keys from localStorage (in case config.js set them after state init)
   state.apiKey = localStorage.getItem('tmdb_api_key') || '';
   state.omdbKey = localStorage.getItem('omdb_api_key') || '';
 
@@ -95,31 +101,34 @@ function init() {
   updateStats();
   renderGrid();
 
-  // Pre-fill API key inputs if keys exist (for editing)
-  if (state.apiKey && elements.apiKeyInput) {
-    elements.apiKeyInput.value = state.apiKey;
-  }
+  // Pre-fill keys
+  if (state.apiKey && elements.apiKeyInput) elements.apiKeyInput.value = state.apiKey;
   const omdbInput = document.getElementById('omdbKeyInput');
-  if (state.omdbKey && omdbInput) {
-    omdbInput.value = state.omdbKey;
-  }
+  if (state.omdbKey && omdbInput) omdbInput.value = state.omdbKey;
 
-  // Check for API key and enable/disable fetch buttons
-  if (state.apiKey) {
-    setFetchButtonsEnabled(state.watchlist.length > 0);
-  } else {
-    // No API keys found - show the modal to prompt user
-    // Delay slightly to ensure page is loaded
-    setTimeout(() => {
-      showModal(elements.apiKeyModal);
-    }, 500);
+  // Initial button state
+  updateFetchButtonsState();
+
+  if (!state.apiKey) {
+    setTimeout(() => showModal(elements.apiKeyModal), 800);
   }
 }
 
-// Helper to enable/disable both fetch buttons together
-function setFetchButtonsEnabled(enabled) {
-  elements.fetchDataBtn.disabled = !enabled;
-  if (elements.fetchDropdownBtn) elements.fetchDropdownBtn.disabled = !enabled;
+function updateFetchButtonsState() {
+  const hasItems = state.watchlist.length > 0;
+  const hasKey = !!state.apiKey;
+  const enabled = hasItems && hasKey;
+
+  const btns = [
+    elements.fetchMissingBtn,
+    elements.fetchDropdownBtn,
+    elements.refreshMissingBtn,
+    elements.refreshDropdownBtn
+  ];
+
+  btns.forEach(btn => {
+    if (btn) btn.disabled = !enabled;
+  });
 }
 
 
@@ -128,86 +137,74 @@ function setupEventListeners() {
   elements.importBtn.addEventListener('click', () => showModal(elements.importModal));
   elements.startImportBtn.addEventListener('click', () => showModal(elements.importModal));
 
-  // Settings button to open API key modal
-  const settingsBtn = document.getElementById('settingsBtn');
-  if (settingsBtn) {
-    settingsBtn.addEventListener('click', () => showModal(elements.apiKeyModal));
+  if (elements.settingsBtn) {
+    elements.settingsBtn.addEventListener('click', () => showModal(elements.apiKeyModal));
   }
 
   document.querySelectorAll('.modal-close').forEach(btn => {
     btn.addEventListener('click', (e) => {
-      const modal = e.target.closest('.modal-overlay');
-      hideModal(modal);
+      hideModal(e.target.closest('.modal-overlay'));
     });
   });
 
-  // Also close fix match modal specifically
-  const closeFixBtn = document.getElementById('closeFixMatchModal');
-  if (closeFixBtn) {
-    closeFixBtn.addEventListener('click', () => {
-      hideModal(document.getElementById('fixMatchModal'));
-    });
-  }
+  // Dropdown Management
+  const toggleDropdown = (menu) => {
+    const isVisible = !menu.classList.contains('invisible');
+    // Close all first
+    elements.fetchMenu.classList.add('opacity-0', 'invisible', 'translate-y-2');
+    elements.refreshMenu.classList.add('opacity-0', 'invisible', 'translate-y-2');
 
-  // Import Tabs
+    if (!isVisible) {
+      menu.classList.remove('opacity-0', 'invisible', 'translate-y-2');
+    }
+  };
+
+  elements.fetchDropdownBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleDropdown(elements.fetchMenu);
+  });
+
+  elements.refreshDropdownBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleDropdown(elements.refreshMenu);
+  });
+
+  document.addEventListener('click', () => {
+    elements.fetchMenu.classList.add('opacity-0', 'invisible', 'translate-y-2');
+    elements.refreshMenu.classList.add('opacity-0', 'invisible', 'translate-y-2');
+  });
+
+  // Fetch Actions
+  elements.fetchMissingBtn.addEventListener('click', () => fetchAllMetadata('missing-metadata'));
+  elements.fetchAllBtn.addEventListener('click', () => fetchAllMetadata('all-metadata'));
+
+  // Refresh Actions
+  elements.refreshMissingBtn.addEventListener('click', () => fetchAllMetadata('missing-ratings'));
+  elements.refreshAllBtn.addEventListener('click', () => fetchAllMetadata('all-ratings'));
+
+  // Import Tabs & Actions
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-
       e.target.classList.add('active');
       document.getElementById(`${e.target.dataset.tab}-tab`).classList.add('active');
     });
   });
 
-  // File Upload
   const fileArea = document.getElementById('fileUploadArea');
   fileArea.addEventListener('click', () => elements.fileInput.click());
-  fileArea.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    fileArea.classList.add('drag-over');
-  });
+  fileArea.addEventListener('dragover', (e) => { e.preventDefault(); fileArea.classList.add('drag-over'); });
   fileArea.addEventListener('dragleave', () => fileArea.classList.remove('drag-over'));
   fileArea.addEventListener('drop', handleFileDrop);
   elements.fileInput.addEventListener('change', handleFileSelect);
 
-  // Data Actions
   elements.addManualBtn.addEventListener('click', handleManualImport);
   elements.parseJsonBtn.addEventListener('click', handleJsonImport);
   elements.loadSampleBtn.addEventListener('click', loadSampleData);
-
-  // Split button: Primary fetch (missing only)
-  elements.fetchDataBtn.addEventListener('click', () => fetchAllMetadata(false));
-
-  // Split button: Dropdown toggle
-  if (elements.fetchDropdownBtn && elements.fetchDropdownMenu) {
-    elements.fetchDropdownBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleFetchDropdown();
-    });
-
-    // Fetch All from dropdown
-    if (elements.fetchAllBtn) {
-      elements.fetchAllBtn.addEventListener('click', () => {
-        hideFetchDropdown();
-        fetchAllMetadata(true);
-      });
-    }
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('#fetchButtonGroup')) {
-        hideFetchDropdown();
-      }
-    });
-  }
-
   elements.saveApiKeyBtn.addEventListener('click', saveApiKey);
 
-  // Dedupe Action
   document.getElementById('dedupeBtn').addEventListener('click', removeDuplicates);
-
-  // Clear All Action
   document.getElementById('clearAllBtn').addEventListener('click', clearAllData);
 
   // Filters
@@ -462,37 +459,61 @@ async function fetchAllMetadata(forceAll = false) {
     return;
   }
 
-  // If forceAll is false, pick items that either have NO metadata OR have metadata but are missing OMDb ratings
-  const itemsToFetch = forceAll
-    ? state.watchlist
-    : state.watchlist.filter(i => !i.details_fetched || (state.omdbKey && !i.imdb_rating && !i.rt_rating));
+  let itemsToFetch = [];
+
+  switch (mode) {
+    case 'missing-metadata':
+      // Only items that haven't been fetched at all
+      itemsToFetch = state.watchlist.filter(item => !item.details_fetched);
+      break;
+
+    case 'all-metadata':
+      // Fetch everything from scratch
+      itemsToFetch = [...state.watchlist];
+      break;
+
+    case 'missing-ratings':
+      // Only items that have details but are missing specific ratings (RT/IMDb)
+      itemsToFetch = state.watchlist.filter(item => {
+        const hasDetails = item.details_fetched;
+        const missingRatings = !item.imdb_rating || item.imdb_rating === 'N/A' || !item.rt_rating;
+        return hasDetails && missingRatings;
+      });
+      break;
+
+    case 'all-ratings':
+      // All items that have basic details (to refresh their scores)
+      itemsToFetch = state.watchlist.filter(item => item.details_fetched);
+      break;
+  }
 
   if (itemsToFetch.length === 0) {
-    console.log(forceAll ? 'Your watchlist is empty.' : 'All items already have complete ratings and details.');
+    console.log(`No items found for mode: ${mode}`);
     return;
   }
 
   showLoading(true, itemsToFetch.length);
 
-  let completed = 0;
-  const errors = [];
+  for (let i = 0; i < itemsToFetch.length; i++) {
+    const item = itemsToFetch[i];
+    updateProgress(i + 1, itemsToFetch.length);
 
-  for (const item of itemsToFetch) {
     try {
       // Step 1: Fetch from TMDB (for posters, genres, metadata)
       const tmdbData = await searchTMDB(item.title);
 
       if (tmdbData) {
-        const idx = state.watchlist.findIndex(w => w.id === item.id);
-        if (idx !== -1) {
-          const extracted = extractTMDBFields(tmdbData);
+        const extracted = extractTMDBFields(tmdbData);
 
-          // Step 2: Fetch from OMDb (for IMDb and RT ratings)
-          const year = extracted.release_date ? extracted.release_date.substring(0, 4) : null;
-          const omdbData = await fetchOMDbRatings(extracted.title, year);
+        // Step 2: Fetch from OMDb (for IMDb and RT ratings)
+        const year = extracted.release_date ? extracted.release_date.substring(0, 4) : null;
+        const omdbData = await fetchOMDbRatings(extracted.title, year);
 
-          state.watchlist[idx] = {
-            ...state.watchlist[idx],
+        // Update the item in the original watchlist
+        const originalItemIndex = state.watchlist.findIndex(w => w.id === item.id);
+        if (originalItemIndex !== -1) {
+          state.watchlist[originalItemIndex] = {
+            ...state.watchlist[originalItemIndex],
             ...extracted,
             // Override with OMDb ratings if available
             imdb_rating: omdbData?.imdb_rating || null,

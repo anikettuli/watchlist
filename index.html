@@ -196,36 +196,63 @@
       </button>
       <div class="w-px h-6 bg-white/10 mx-2"></div>
 
-      <!-- Split Button: Fetch with Dropdown -->
-      <div class="relative" id="fetchButtonGroup">
+      <!-- Fetch Button Group -->
+      <div class="relative dropdown-group" id="fetchGroup">
         <div class="flex">
-          <!-- Primary Button -->
-          <button id="fetchDataBtn"
+          <button id="fetchMissingBtn"
             class="btn-primary btn-base px-5 rounded-r-none border-r border-white/20 shadow-indigo-500/20" disabled
-            title="Fetch missing data & ratings">
+            title="Fetch only missing data">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-              <path
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <path d="M12 4v16m8-8H4" />
             </svg>
-            <span>Fetch</span>
+            <span>Fetch Missing</span>
           </button>
-          <!-- Dropdown Trigger -->
-          <button id="fetchDropdownBtn" class="btn-primary btn-base px-2 rounded-l-none shadow-indigo-500/20" disabled
-            title="More options">
+          <button id="fetchDropdownBtn" class="btn-primary btn-base px-2 rounded-l-none" disabled>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
               <path d="M19 9l-7 7-7-7" />
             </svg>
           </button>
         </div>
-        <!-- Dropdown Menu -->
-        <div id="fetchDropdownMenu"
-          class="absolute right-0 top-full mt-2 w-48 glass rounded-xl border border-white/10 shadow-2xl opacity-0 invisible transition-all duration-200 z-50">
-          <div class="p-2">
+        <!-- Fetch Dropdown Menu -->
+        <div id="fetchMenu"
+          class="dropdown-menu absolute right-0 top-full mt-2 w-48 glass rounded-2xl border border-white/10 shadow-2xl opacity-0 invisible translate-y-2 transition-all duration-200 z-50">
+          <div class="p-1">
             <button id="fetchAllBtn"
-              class="w-full text-left px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white rounded-lg transition-colors flex items-center gap-3">
+              class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white rounded-xl transition-all">
               <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Fetch All
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Refresh Button Group -->
+      <div class="relative dropdown-group" id="refreshGroup">
+        <div class="flex">
+          <button id="refreshMissingBtn" class="btn-secondary btn-base px-5 rounded-r-none border-r border-white/10"
+            disabled title="Refresh ratings for missing items">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>Refresh Missing</span>
+          </button>
+          <button id="refreshDropdownBtn" class="btn-secondary btn-base px-2 rounded-l-none" disabled>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+        <!-- Refresh Dropdown Menu -->
+        <div id="refreshMenu"
+          class="dropdown-menu absolute right-0 top-full mt-2 w-48 glass rounded-2xl border border-white/10 shadow-2xl opacity-0 invisible translate-y-2 transition-all duration-200 z-50">
+          <div class="p-1">
+            <button id="refreshAllBtn"
+              class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white rounded-xl transition-all">
+              <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
               Refresh All
             </button>
